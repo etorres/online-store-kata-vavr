@@ -1,11 +1,10 @@
 package es.eriktorr.samples.resilient.orders.domain.model;
 
-import io.vavr.collection.Set;
 import lombok.Value;
 
 @Value
-public class Orders {
+public class Order {
 
-    private final Set<Order> orders;
+    private final OrderId orderId;
 
 }

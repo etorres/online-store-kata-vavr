@@ -7,6 +7,6 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class StoreId {
 
-    String value;
+    private final String value;
 
 }
