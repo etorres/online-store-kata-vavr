@@ -2,12 +2,12 @@ package es.eriktorr.samples.resilient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.eriktorr.samples.resilient.infrastructure.ws.ClientType;
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
 import es.eriktorr.samples.resilient.orders.domain.model.Orders;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
-import io.vavr.collection.HashSet;
 import lombok.val;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,11 +15,15 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -31,7 +35,7 @@ public class OrderProcessorTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    @Autowired
+    @Autowired @ClientType("OrdersService")
     private RestTemplate restTemplate;
 
     @Autowired
@@ -40,14 +44,17 @@ public class OrderProcessorTest {
     @Autowired
     private OrderProcessor orderProcessor;
 
+    @Value("${orders.service.url}")
+    private String ordersServiceUrl;
+
     @Before
     public void setUp() throws JsonProcessingException {
-        val ordersJsonPayload = objectMapper.writeValueAsString(new Orders(HashSet.of(
+        val ordersJsonPayload = objectMapper.writeValueAsString(new Orders(new HashSet<>(Arrays.asList(
                 new Order(new OrderId("o1")),
                 new Order(new OrderId("o2"))
-        )));
+        ))));
         val mockRestServiceServer = MockRestServiceServer.createServer(restTemplate);
-        mockRestServiceServer.expect(requestTo("/store1/orders"))
+        mockRestServiceServer.expect(requestTo(ordersServiceUrl + "/store1/orders"))
                 .andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
     }
 

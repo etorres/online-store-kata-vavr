@@ -2,6 +2,7 @@ package es.eriktorr.samples.resilient.orders.domain.services;
 
 import es.eriktorr.samples.resilient.infrastructure.ws.OrdersServiceClient;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
+import lombok.val;
 
 public class OrderProcessor {
 
@@ -12,6 +13,10 @@ public class OrderProcessor {
     }
 
     public void processOrdersFrom(StoreId storeId) {
+        val orders = ordersServiceClient.ordersFrom(storeId);
+
+        // TODO
+
         throw new IllegalStateException("feature under development");
     }
 

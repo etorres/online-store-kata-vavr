@@ -1,7 +1,8 @@
 package es.eriktorr.samples.resilient.orders.domain.model;
 
-import io.vavr.collection.Set;
 import lombok.Value;
+
+import java.util.Set;
 
 @Value
 public class Orders {

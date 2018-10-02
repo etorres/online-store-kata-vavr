@@ -1,0 +1,14 @@
+spring:
+  application.name: resilient-application
+  profiles.active: development
+orders.service:
+  url: http://orders.${spring.profiles.active}.example.com
+---
+spring:
+  profiles: development
+---
+spring:
+  profiles: staging
+---
+spring:
+  profiles: production
