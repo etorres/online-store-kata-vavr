@@ -15,6 +15,17 @@ public class OrderProcessor {
     public void processOrdersFrom(StoreId storeId) {
         val orders = ordersServiceClient.ordersFrom(storeId);
 
+        System.err.println("\n\n >> HERE: " + orders + "\n");
+
+        // fetchOrdersFromWebService
+
+        // saveOrderInFileSystem
+
+        // auditOrderInDatabase
+
+        // writeMessageToLoggingSystem
+
+
         // TODO
 
         throw new IllegalStateException("feature under development");

@@ -17,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -25,6 +26,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import static es.eriktorr.samples.resilient.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -35,7 +38,7 @@ public class OrderProcessorTest {
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    @Autowired @ClientType("OrdersService")
+    @Autowired @ClientType(ORDERS_SERVICE_CLIENT)
     private RestTemplate restTemplate;
 
     @Autowired
@@ -55,6 +58,7 @@ public class OrderProcessorTest {
         ))));
         val mockRestServiceServer = MockRestServiceServer.createServer(restTemplate);
         mockRestServiceServer.expect(requestTo(ordersServiceUrl + "/store1/orders"))
+                .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
     }
 
@@ -62,6 +66,9 @@ public class OrderProcessorTest {
     public void
     process_orders_from_store() {
         orderProcessor.processOrdersFrom(new StoreId("store1"));
+
+        // TODO
+        // check second-order effects
     }
 
 }

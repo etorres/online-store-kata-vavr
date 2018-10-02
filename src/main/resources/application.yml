@@ -3,6 +3,14 @@ spring:
   profiles.active: development
 orders.service:
   url: http://orders.${spring.profiles.active}.example.com
+resilience4j.circuitbreaker:
+  backends:
+    ordersServiceClient:
+      ringBufferSizeInClosedState: 10
+      ringBufferSizeInHalfOpenState: 5
+      waitInterval: 5000
+      failureRateThreshold: 50
+      eventConsumerBufferSize: 10
 ---
 spring:
   profiles: development
