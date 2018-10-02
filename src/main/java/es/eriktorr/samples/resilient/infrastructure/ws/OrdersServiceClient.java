@@ -9,6 +9,8 @@ import io.vavr.control.Try;
 import lombok.val;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.function.Supplier;
+
 public class OrdersServiceClient extends CircuitBreakerClient {
 
     public static final String ORDERS_SERVICE_CLIENT = "ordersServiceClient";
@@ -20,12 +22,12 @@ public class OrdersServiceClient extends CircuitBreakerClient {
     }
 
     public Try<Orders> ordersFrom(StoreId storeId) {
-        val backendFunction = CircuitBreaker.decorateSupplier(circuitBreaker, () -> fetchOrders(storeId));
-        return Try.ofSupplier(backendFunction);
+        val ordersSupplier = CircuitBreaker.decorateSupplier(circuitBreaker, fetchOrders(storeId));
+        return Try.ofSupplier(ordersSupplier);
     }
 
-    private Orders fetchOrders(StoreId storeId) {
-        return restTemplate.getForObject("/{storeId}/orders", Orders.class, storeId.value());
+    private Supplier<Orders> fetchOrders(StoreId storeId) {
+        return () -> restTemplate.getForObject("/{storeId}/orders", Orders.class, storeId.value());
     }
 
 }
