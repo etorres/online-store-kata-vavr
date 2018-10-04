@@ -6,5 +6,6 @@ import lombok.Value;
 public class Order {
 
     private final OrderId orderId;
+    private final String description;
 
 }

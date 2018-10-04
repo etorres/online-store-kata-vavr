@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.infrastructure.ws;
+package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
 import es.eriktorr.samples.resilient.orders.domain.model.Orders;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;

@@ -1,6 +1,10 @@
 spring:
   application.name: resilient-application
   profiles.active: development
+  datasource:
+    url: jdbc:postgresql://localhost/resilient
+    username: postgres
+    password: changeit
 orders.service:
   url: http://orders.${spring.profiles.active}.example.com
 resilience4j.circuitbreaker:

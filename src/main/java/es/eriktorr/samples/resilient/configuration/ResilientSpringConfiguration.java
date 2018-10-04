@@ -1,7 +1,8 @@
 package es.eriktorr.samples.resilient.configuration;
 
-import es.eriktorr.samples.resilient.infrastructure.ws.ClientType;
-import es.eriktorr.samples.resilient.infrastructure.ws.OrdersServiceClient;
+import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
+import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import static es.eriktorr.samples.resilient.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
+import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 
 @Configuration
 public class ResilientSpringConfiguration {
@@ -33,8 +34,8 @@ public class ResilientSpringConfiguration {
     }
 
     @Bean
-    public OrderProcessor orderProcessor(OrdersServiceClient ordersServiceClient) {
-        return new OrderProcessor(ordersServiceClient);
+    public OrderProcessor orderProcessor(OrdersServiceClient ordersServiceClient, OrdersRepository ordersRepository) {
+        return new OrderProcessor(ordersServiceClient, ordersRepository);
     }
 
 }
