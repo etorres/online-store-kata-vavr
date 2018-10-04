@@ -5,18 +5,22 @@ import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
 import io.vavr.control.Try;
 import lombok.val;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 public class OrdersRepository {
 
-    private static final String INSERT_ORDER_SQL = "INSERT INTO orders (description) VALUES (?)";
+    private static final String INSERT_ORDER_SQL = "INSERT INTO orders (description) VALUES (:description)";
 
-    private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public OrdersRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public OrdersRepository(JdbcTemplate namedParameterJdbcTemplate) {
+        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(namedParameterJdbcTemplate);
     }
 
     public Try<Order> save(Order order) {
@@ -31,12 +35,9 @@ public class OrdersRepository {
 
     private long insertIntoDatabase(Order order) {
         val generatedKeyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            val preparedStatement = connection.prepareStatement(INSERT_ORDER_SQL);
-            preparedStatement.setString(1, order.getDescription());
-            return preparedStatement;
-        }, generatedKeyHolder);
-        return (long) generatedKeyHolder.getKey();
+        val namedParameters = new MapSqlParameterSource("description", order.getDescription());
+        namedParameterJdbcTemplate.update(INSERT_ORDER_SQL, namedParameters, generatedKeyHolder, new String[] { "id" });
+        return Optional.ofNullable(generatedKeyHolder.getKey()).orElse(-1L).longValue();
     }
 
 }

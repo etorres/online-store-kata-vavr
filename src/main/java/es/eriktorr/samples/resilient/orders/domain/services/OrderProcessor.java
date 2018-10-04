@@ -7,12 +7,14 @@ import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersReposi
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import io.vavr.Function1;
 import io.vavr.control.Try;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class OrderProcessor {
 
     private final OrdersServiceClient ordersServiceClient;
@@ -49,6 +51,11 @@ public class OrderProcessor {
                 : order;
 
         private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> {
+            if (order.isSuccess()) {
+                log.info(String.format("Order created: %s", order));
+            } else {
+                log.error("Failed to create order", order.getCause());
+            }
             return order;
         };
 

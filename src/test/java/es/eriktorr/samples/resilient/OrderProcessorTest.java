@@ -58,19 +58,19 @@ public class OrderProcessorTest {
     private MockRestServiceServer mockRestServiceServer;
 
     @Before
-    public void setUp() throws JsonProcessingException {
-        val ordersJsonPayload = objectMapper.writeValueAsString(new Orders(new HashSet<>(Arrays.asList(
-                new Order(new OrderId("o1"), "Purchase includes a discount"),
-                new Order(new OrderId("o2"), "The payment is pending")
-        ))));
+    public void setUp() {
         mockRestServiceServer = MockRestServiceServer.createServer(restTemplate);
-        givenGetOrdersFrom(OK_STORE_ID).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
-        givenGetOrdersFrom(ERROR_STORE_ID).andRespond(withServerError());
     }
 
     @Test
     public void
-    process_orders_from_store() {
+    process_orders_from_store() throws JsonProcessingException {
+        val ordersJsonPayload = objectMapper.writeValueAsString(new Orders(new HashSet<>(Arrays.asList(
+                new Order(new OrderId("o1"), "Purchase includes a discount"),
+                new Order(new OrderId("o2"), "The payment is pending")
+        ))));
+        givenGetOrdersFrom(OK_STORE_ID).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
+
         orderProcessor.processOrdersFrom(new StoreId(OK_STORE_ID));
 
         // TODO
@@ -79,9 +79,12 @@ public class OrderProcessorTest {
 
     @Test public void
     fail_to_fetch_orders_from_external_web_service() {
+        givenGetOrdersFrom(ERROR_STORE_ID).andRespond(withServerError());
+
         orderProcessor.processOrdersFrom(new StoreId(ERROR_STORE_ID));
 
         // TODO
+        // check second-order effects
     }
 
     // TODO : fail to save orders to file-system
