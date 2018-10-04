@@ -71,4 +71,8 @@ public class OrderProcessorTest {
         // check second-order effects
     }
 
+    // TODO : fail to fetch orders from external Web service
+
+    // TODO : fail to save orders to file-system
+
 }
