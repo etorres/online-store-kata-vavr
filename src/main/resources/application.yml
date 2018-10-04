@@ -5,8 +5,9 @@ spring:
     url: jdbc:postgresql://localhost/resilient
     username: postgres
     password: changeit
-orders.service:
-  url: http://orders.${spring.profiles.active}.example.com
+orders:
+  service.url: http://orders.${spring.profiles.active}.example.com
+  storage.path: /tmp/resilient
 resilience4j.circuitbreaker:
   backends:
     ordersServiceClient:

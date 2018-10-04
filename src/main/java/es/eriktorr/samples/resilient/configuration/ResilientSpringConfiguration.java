@@ -1,6 +1,7 @@
 package es.eriktorr.samples.resilient.configuration;
 
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
@@ -20,6 +21,9 @@ public class ResilientSpringConfiguration {
     @Value("${orders.service.url}")
     private String ordersServiceUrl;
 
+    @Value("${orders.storage.path}")
+    private String ordersStoragePath;
+
     @Bean @ClientType(ORDERS_SERVICE_CLIENT)
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
@@ -34,8 +38,14 @@ public class ResilientSpringConfiguration {
     }
 
     @Bean
-    public OrderProcessor orderProcessor(OrdersServiceClient ordersServiceClient, OrdersRepository ordersRepository) {
-        return new OrderProcessor(ordersServiceClient, ordersRepository);
+    public OrdersFileWriter ordersFileWriter() {
+        return new OrdersFileWriter(ordersStoragePath);
+    }
+
+    @Bean
+    public OrderProcessor orderProcessor(OrdersServiceClient ordersServiceClient, OrdersFileWriter ordersFileWriter,
+                                         OrdersRepository ordersRepository) {
+        return new OrderProcessor(ordersServiceClient, ordersFileWriter, ordersRepository);
     }
 
 }
