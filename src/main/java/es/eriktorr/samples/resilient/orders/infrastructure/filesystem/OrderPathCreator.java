@@ -14,7 +14,7 @@ public class OrderPathCreator {
     }
 
     public Path pathFrom(Order order) {
-        return Paths.get(ordersStoragePath, order.getOrderId().getValue());
+        return Paths.get(ordersStoragePath, order.getOrderReference().getValue() + "_" + order.getStoreId().getValue());
     }
 
 }

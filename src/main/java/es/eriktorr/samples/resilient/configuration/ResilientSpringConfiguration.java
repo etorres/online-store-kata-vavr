@@ -1,5 +1,6 @@
 package es.eriktorr.samples.resilient.configuration;
 
+import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
@@ -38,6 +39,11 @@ public class ResilientSpringConfiguration {
     @Value("${orders.storage.retry.intervalInMillis}")
     private long ordersIntervalInMillis;
 
+    @Bean
+    public OrderIdGenerator orderIdGenerator() {
+        return new OrderIdGenerator();
+    }
+
     @Bean @ClientType(ORDERS_SERVICE_CLIENT)
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
@@ -46,9 +52,10 @@ public class ResilientSpringConfiguration {
     }
 
     @Bean
-    public OrdersServiceClient ordersServiceClient(RestTemplate restTemplate, CircuitBreakerRegistry circuitBreakerRegistry,
+    public OrdersServiceClient ordersServiceClient(RestTemplate restTemplate, OrderIdGenerator orderIdGenerator,
+                                                   CircuitBreakerRegistry circuitBreakerRegistry,
                                                    CircuitBreakerProperties circuitBreakerProperties) {
-        return new OrdersServiceClient(restTemplate, circuitBreakerRegistry, circuitBreakerProperties);
+        return new OrdersServiceClient(restTemplate, orderIdGenerator, circuitBreakerRegistry, circuitBreakerProperties);
     }
 
     @Bean

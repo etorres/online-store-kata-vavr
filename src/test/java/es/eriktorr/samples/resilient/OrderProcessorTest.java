@@ -1,9 +1,7 @@
 package es.eriktorr.samples.resilient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
-import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
+import es.eriktorr.samples.resilient.orders.domain.model.*;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
@@ -15,6 +13,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -26,10 +25,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.UUID;
 
 import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -38,17 +39,15 @@ import static org.springframework.util.FileSystemUtils.deleteRecursively;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ResilientSpringApplication.class, properties = {
-        "orders.storage.path=${java.io.tmpdir}/resilient/${random.value}",
-        "order1.uuid=${random.uuid}",
-        "order2.uuid=${random.uuid}"
+        "orders.storage.path=${java.io.tmpdir}/resilient/${random.value}"
 })
 public class OrderProcessorTest {
 
-    private static final String OK_STORE_ID = "store_ok";
-    private static final String ERROR_STORE_ID = "store_error";
+    private static final String STORE_ID_1 = "store1";
+    private static final String NO_STORE_ID = "no_store";
 
-    private static final Order ORDER_1 = new Order(new OrderId("o1"), "Purchase includes a discount");
-    private static final Order ORDER_2 = new Order(new OrderId("o2"), "The payment is pending");
+    private static final OrderId ORDER_ID_1 = new OrderId("00000000-0000-0000-0000-000000000000");
+    private static final OrderId ORDER_ID_2 = new OrderId("11111111-1111-1111-1111-111111111111");
 
     @Autowired @ClientType(ORDERS_SERVICE_CLIENT)
     private RestTemplate restTemplate;
@@ -61,6 +60,9 @@ public class OrderProcessorTest {
 
     @Autowired
     private OrderProcessor orderProcessor;
+
+    @MockBean
+    private OrderIdGenerator orderIdGenerator;
 
     @Value("${orders.service.url}")
     private String ordersServiceUrl;
@@ -80,28 +82,31 @@ public class OrderProcessorTest {
     @Test
     public void
     process_orders_from_store() throws IOException {
-        val ordersJsonPayload = objectMapper.writeValueAsString(new HashSet<>(Arrays.asList(
-                ORDER_1, ORDER_2
+        final Order order1 = order1(STORE_ID_1), order2 = order2(STORE_ID_1);
+        val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
+                order1, order2
         )));
-        givenGetOrdersFrom(OK_STORE_ID).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
+        givenGetOrdersFrom(STORE_ID_1).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
+        given(orderIdGenerator.nextOrderId()).willReturn(ORDER_ID_1, ORDER_ID_2);
 
-        orderProcessor.processOrdersFrom(new StoreId(OK_STORE_ID));
+        orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
 
         // TODO
 
-        assertThatAFileWasCreatedFor(ORDER_1);
-        assertThatAFileWasCreatedFor(ORDER_2);
+        assertThatAFileWasCreatedFor(Order.from(ORDER_ID_1, order1));
+        assertThatAFileWasCreatedFor(Order.from(ORDER_ID_2, order2));
     }
 
     @Test public void
     fail_to_fetch_orders_from_external_web_service() {
-        givenGetOrdersFrom(ERROR_STORE_ID).andRespond(withServerError());
+        final Order order1 = order1(NO_STORE_ID), order2 = order2(NO_STORE_ID);
+        givenGetOrdersFrom(NO_STORE_ID).andRespond(withServerError());
 
-        orderProcessor.processOrdersFrom(new StoreId(ERROR_STORE_ID));
+        orderProcessor.processOrdersFrom(new StoreId(NO_STORE_ID));
 
         // TODO
-        assertThatFilesDoesNotExist(ORDER_1);
-        assertThatFilesDoesNotExist(ORDER_2);
+        assertThatFilesDoesNotExist(order1);
+        assertThatFilesDoesNotExist(order2);
     }
 
     // TODO : fail to save orders to file-system
@@ -120,6 +125,20 @@ public class OrderProcessorTest {
     private void assertThatFilesDoesNotExist(Order order) {
         val path = orderPathCreator.pathFrom(order);
         assertThat(Files.exists(path)).isFalse();
+    }
+
+    private Order order1(String storeId) {
+        return new Order(null,
+                new StoreId(storeId),
+                new OrderReference(UUID.randomUUID().toString()),
+                "Purchase includes a discount");
+    }
+
+    private Order order2(String storeId) {
+        return new Order(null,
+                new StoreId(storeId),
+                new OrderReference(UUID.randomUUID().toString()),
+                "The payment is pending");
     }
 
     /*

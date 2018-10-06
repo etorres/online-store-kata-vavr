@@ -1,6 +1,7 @@
 package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
+import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -8,20 +9,27 @@ import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerPropert
 import lombok.val;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class OrdersServiceClient extends CircuitBreakerClient {
 
     public static final String ORDERS_SERVICE_CLIENT = "ordersServiceClient";
 
+    private final OrderIdGenerator orderIdGenerator;
+
     public OrdersServiceClient(@ClientType(ORDERS_SERVICE_CLIENT) RestTemplate restTemplate,
-                               CircuitBreakerRegistry circuitBreakerRegistry,
+                               OrderIdGenerator orderIdGenerator, CircuitBreakerRegistry circuitBreakerRegistry,
                                CircuitBreakerProperties circuitBreakerProperties) {
         super(restTemplate, circuitBreakerRegistry, circuitBreakerProperties, ORDERS_SERVICE_CLIENT);
+        this.orderIdGenerator = orderIdGenerator;
     }
 
     public List<Order> ordersFrom(StoreId storeId) {
@@ -37,11 +45,16 @@ public class OrdersServiceClient extends CircuitBreakerClient {
                     null,
                     new ParameterizedTypeReference<List<Order>>(){},
                     new HashMap<String, String>() {{
-                        put("storeId", storeId.value());
+                        put("storeId", storeId.getValue());
                     }}
             );
-            return response.getBody();
+            return ordersWithIdFrom(response);
         };
+    }
+
+    private List<Order> ordersWithIdFrom(ResponseEntity<List<Order>> response) {
+        return Optional.ofNullable(response.getBody()).orElse(Collections.emptyList()).stream()
+                .map(order -> Order.from(orderIdGenerator.nextOrderId(), order)).collect(Collectors.toList());
     }
 
 }
