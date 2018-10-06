@@ -5,7 +5,7 @@ import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
+import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
 import lombok.val;
 import org.junit.After;
@@ -25,7 +25,6 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -58,7 +57,7 @@ public class OrderProcessorTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private OrdersFileWriter ordersFileWriter;
+    private OrderPathCreator orderPathCreator;
 
     @Autowired
     private OrderProcessor orderProcessor;
@@ -75,7 +74,7 @@ public class OrderProcessorTest {
 
     @After
     public void cleanUp() {
-        deleteRecursively(new File(ordersFileWriter.ordersStoragePath));
+        deleteRecursively(new File(orderPathCreator.ordersStoragePath));
     }
 
     @Test
@@ -90,8 +89,8 @@ public class OrderProcessorTest {
 
         // TODO
 
-        assertSave(ORDER_1);
-        assertSave(ORDER_2);
+        assertThatAFileWasCreatedFor(ORDER_1);
+        assertThatAFileWasCreatedFor(ORDER_2);
     }
 
     @Test public void
@@ -101,7 +100,8 @@ public class OrderProcessorTest {
         orderProcessor.processOrdersFrom(new StoreId(ERROR_STORE_ID));
 
         // TODO
-        // check second-order effects
+        assertThatFilesDoesNotExist(ORDER_1);
+        assertThatFilesDoesNotExist(ORDER_2);
     }
 
     // TODO : fail to save orders to file-system
@@ -112,9 +112,14 @@ public class OrderProcessorTest {
                 .andExpect(method(HttpMethod.GET));
     }
 
-    private void assertSave(Order order) throws IOException {
-        val path = Paths.get(ordersFileWriter.ordersStoragePath, order.getOrderId().getValue());
+    private void assertThatAFileWasCreatedFor(Order order) throws IOException {
+        val path = orderPathCreator.pathFrom(order);
         assertThat(Files.readAllLines(path).get(0)).isEqualTo(order.toString());
+    }
+
+    private void assertThatFilesDoesNotExist(Order order) {
+        val path = orderPathCreator.pathFrom(order);
+        assertThat(Files.exists(path)).isFalse();
     }
 
     /*

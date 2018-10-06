@@ -2,6 +2,7 @@ package es.eriktorr.samples.resilient.configuration;
 
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.WriterType;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
@@ -64,8 +65,15 @@ public class ResilientSpringConfiguration {
     }
 
     @Bean
-    public OrdersFileWriter ordersFileWriter(RetryRegistry retryRegistry, @WriterType(ORDERS_FILE_WRITER) RetryConfig retryConfig) {
-        return new OrdersFileWriter(ordersStoragePath, retryRegistry, retryConfig);
+    public OrderPathCreator orderPathCreator() {
+        return new OrderPathCreator(ordersStoragePath);
+    }
+
+    @Bean
+    public OrdersFileWriter ordersFileWriter(OrderPathCreator orderPathCreator,
+                                             RetryRegistry retryRegistry,
+                                             @WriterType(ORDERS_FILE_WRITER) RetryConfig retryConfig) {
+        return new OrdersFileWriter(orderPathCreator, retryRegistry, retryConfig);
     }
 
     @Bean

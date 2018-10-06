@@ -8,7 +8,6 @@ import io.vavr.CheckedFunction0;
 import lombok.val;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import static io.github.resilience4j.retry.Retry.decorateCheckedSupplier;
 
@@ -16,11 +15,11 @@ public class OrdersFileWriter {
 
     public static final String ORDERS_FILE_WRITER = "ordersFileWriter";
 
-    public final String ordersStoragePath;
+    private final OrderPathCreator orderPathCreator;
     private final Retry retry;
 
-    public OrdersFileWriter(String ordersStoragePath, RetryRegistry retryRegistry, RetryConfig retryConfig) {
-        this.ordersStoragePath = ordersStoragePath;
+    public OrdersFileWriter(OrderPathCreator orderPathCreator, RetryRegistry retryRegistry, RetryConfig retryConfig) {
+        this.orderPathCreator = orderPathCreator;
         this.retry = retryRegistry.retry(ORDERS_FILE_WRITER, retryConfig);
     }
 
@@ -31,7 +30,7 @@ public class OrdersFileWriter {
 
     private CheckedFunction0<Order> writeOrderToFile(Order order) {
         return () -> {
-            val path = Paths.get(ordersStoragePath, order.getOrderId().getValue());
+            val path = orderPathCreator.pathFrom(order);
             val bytes = order.toString().getBytes();
             Files.createDirectories(path.getParent());
             Files.write(path, bytes);
