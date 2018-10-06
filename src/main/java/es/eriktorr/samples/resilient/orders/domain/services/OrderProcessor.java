@@ -1,7 +1,6 @@
 package es.eriktorr.samples.resilient.orders.domain.services;
 
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
-import es.eriktorr.samples.resilient.orders.domain.model.Orders;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
@@ -42,13 +41,17 @@ public class OrderProcessor {
 
     private class Functions {
 
-        private Function1<Try<Orders>, List<Try<Order>>> toOrdersSequence = orders -> orders.isSuccess()
-                ? orders.get().getOrders().stream().map(Try::success).collect(Collectors.toList())
+        private Function1<Try<List<Order>>, List<Try<Order>>> toOrdersSequence = orders -> orders.isSuccess()
+                ? orders.get().stream().map(Try::success).collect(Collectors.toList())
                 : Collections.singletonList(Try.failure(orders.getCause()));
 
-        private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem = order -> order.isSuccess()
-                ? ordersFileWriter.writeToFile(order.get())
-                : order;
+        private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem =
+                order -> order.andThen(() -> ordersFileWriter.writeToFile(order.get()));
+
+
+//                order -> order.isSuccess()
+//                ? ordersFileWriter.writeToFile(order.get())
+//                : order;
 
         private Function1<Try<Order>, Try<Order>> insertOrderIntoDatabase = order -> order.isSuccess()
                 ? ordersRepository.save(order.get())

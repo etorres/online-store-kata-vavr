@@ -2,12 +2,11 @@ package es.eriktorr.samples.resilient;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
-import es.eriktorr.samples.resilient.orders.domain.model.Orders;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
+import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
 import lombok.val;
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,10 +64,10 @@ public class OrderProcessorTest {
     @Test
     public void
     process_orders_from_store() throws JsonProcessingException {
-        val ordersJsonPayload = objectMapper.writeValueAsString(new Orders(new HashSet<>(Arrays.asList(
+        val ordersJsonPayload = objectMapper.writeValueAsString(new HashSet<>(Arrays.asList(
                 new Order(new OrderId("o1"), "Purchase includes a discount"),
                 new Order(new OrderId("o2"), "The payment is pending")
-        ))));
+        )));
         givenGetOrdersFrom(OK_STORE_ID).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
 
         orderProcessor.processOrdersFrom(new StoreId(OK_STORE_ID));
@@ -94,5 +93,14 @@ public class OrderProcessorTest {
         return mockRestServiceServer.expect(requestTo(url))
                 .andExpect(method(HttpMethod.GET));
     }
+
+    // TODO : String read = Files.readAllLines(path).get(0);
+
+    /*
+    * Deduplicate
+    * Get or Else
+    * Summary Log on termination
+    * RetryProperties
+    */
 
 }

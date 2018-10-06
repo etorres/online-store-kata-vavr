@@ -15,7 +15,7 @@ public abstract class CircuitBreakerClient {
                                    CircuitBreakerProperties circuitBreakerProperties,
                                    String name) {
         this.restTemplate = restTemplate;
-        circuitBreaker = circuitBreakerRegistry.circuitBreaker(name, () -> circuitBreakerProperties.createCircuitBreakerConfig(name));
+        circuitBreaker = circuitBreakerRegistry.circuitBreaker(name, circuitBreakerProperties.createCircuitBreakerConfig(name));
     }
 
 }
