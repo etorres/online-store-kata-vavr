@@ -8,7 +8,7 @@ spring:
 orders:
   service.url: http://orders.${spring.profiles.active}.example.com
   storage:
-    path: /tmp/resilient
+    path: /storage/ftp/orders
     retry:
       maxAttempts: 3
       intervalInMillis: 1000

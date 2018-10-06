@@ -35,27 +35,21 @@ public class OrderProcessor {
     }
 
     private List<Try<Order>> fetchOrdersFrom(StoreId storeId) {
-        return ordersServiceClient.ordersFrom(storeId)
-                .transform(functions.toOrdersSequence);
+        return Try.ofSupplier(() -> ordersServiceClient.ordersFrom(storeId))
+                .transform(functions.toTrySequence);
     }
 
     private class Functions {
 
-        private Function1<Try<List<Order>>, List<Try<Order>>> toOrdersSequence = orders -> orders.isSuccess()
+        private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> orders.isSuccess()
                 ? orders.get().stream().map(Try::success).collect(Collectors.toList())
                 : Collections.singletonList(Try.failure(orders.getCause()));
 
         private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem =
-                order -> order.andThen(() -> ordersFileWriter.writeToFile(order.get()));
+                order -> order.andThen(ordersFileWriter::writeToFile);
 
-
-//                order -> order.isSuccess()
-//                ? ordersFileWriter.writeToFile(order.get())
-//                : order;
-
-        private Function1<Try<Order>, Try<Order>> insertOrderIntoDatabase = order -> order.isSuccess()
-                ? ordersRepository.save(order.get())
-                : order;
+        private Function1<Try<Order>, Try<Order>> insertOrderIntoDatabase =
+                order -> order.andThen(() -> ordersRepository.save(order.get()));
 
         private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> {
             if (order.isSuccess()) {

@@ -5,7 +5,6 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.vavr.CheckedFunction0;
-import io.vavr.control.Try;
 import lombok.val;
 
 import java.nio.file.Files;
@@ -17,7 +16,7 @@ public class OrdersFileWriter {
 
     public static final String ORDERS_FILE_WRITER = "ordersFileWriter";
 
-    private final String ordersStoragePath;
+    public final String ordersStoragePath;
     private final Retry retry;
 
     public OrdersFileWriter(String ordersStoragePath, RetryRegistry retryRegistry, RetryConfig retryConfig) {
@@ -25,9 +24,9 @@ public class OrdersFileWriter {
         this.retry = retryRegistry.retry(ORDERS_FILE_WRITER, retryConfig);
     }
 
-    public Try<Order> writeToFile(Order order) {
+    public void writeToFile(Order order) {
         val ordersSupplier = decorateCheckedSupplier(retry, writeOrderToFile(order));
-        return Try.of(ordersSupplier);
+        ordersSupplier.unchecked().apply();
     }
 
     private CheckedFunction0<Order> writeOrderToFile(Order order) {

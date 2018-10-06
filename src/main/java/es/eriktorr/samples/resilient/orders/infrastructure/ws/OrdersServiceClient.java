@@ -5,7 +5,6 @@ import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
-import io.vavr.control.Try;
 import lombok.val;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -25,9 +24,9 @@ public class OrdersServiceClient extends CircuitBreakerClient {
         super(restTemplate, circuitBreakerRegistry, circuitBreakerProperties, ORDERS_SERVICE_CLIENT);
     }
 
-    public Try<List<Order>> ordersFrom(StoreId storeId) {
+    public List<Order> ordersFrom(StoreId storeId) {
         val ordersSupplier = CircuitBreaker.decorateSupplier(circuitBreaker, fetchOrders(storeId));
-        return Try.ofSupplier(ordersSupplier);
+        return ordersSupplier.get();
     }
 
     private Supplier<List<Order>> fetchOrders(StoreId storeId) {
