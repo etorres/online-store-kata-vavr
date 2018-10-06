@@ -3,6 +3,7 @@ package es.eriktorr.samples.resilient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.eriktorr.samples.resilient.orders.domain.model.*;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
+import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
 import lombok.val;
@@ -46,9 +47,6 @@ public class OrderProcessorTest {
     private static final String STORE_ID_1 = "store1";
     private static final String NO_STORE_ID = "no_store";
 
-    private static final OrderId ORDER_ID_1 = new OrderId("00000000-0000-0000-0000-000000000000");
-    private static final OrderId ORDER_ID_2 = new OrderId("11111111-1111-1111-1111-111111111111");
-
     @Autowired @ClientType(ORDERS_SERVICE_CLIENT)
     private RestTemplate restTemplate;
 
@@ -60,6 +58,9 @@ public class OrderProcessorTest {
 
     @Autowired
     private OrderProcessor orderProcessor;
+
+    @Autowired
+    private OrdersRepository ordersRepository;
 
     @MockBean
     private OrderIdGenerator orderIdGenerator;
@@ -82,31 +83,35 @@ public class OrderProcessorTest {
     @Test
     public void
     process_orders_from_store() throws IOException {
-        final Order order1 = order1(STORE_ID_1), order2 = order2(STORE_ID_1);
+        final String uuid1 = UUID.randomUUID().toString(), uuid2 = UUID.randomUUID().toString();
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2);
+        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2);
         val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
                 order1, order2
         )));
         givenGetOrdersFrom(STORE_ID_1).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
-        given(orderIdGenerator.nextOrderId()).willReturn(ORDER_ID_1, ORDER_ID_2);
+        given(orderIdGenerator.nextOrderId()).willReturn(orderId1, orderId2);
 
         orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
 
-        // TODO
-
-        assertThatAFileWasCreatedFor(Order.from(ORDER_ID_1, order1));
-        assertThatAFileWasCreatedFor(Order.from(ORDER_ID_2, order2));
+        assertThatAFileWasCreatedFor(Order.from(orderId1, order1));
+        assertThatAFileWasCreatedFor(Order.from(orderId2, order2));
+        assertThatRecordWasInserted(Order.from(orderId1, order1));
+        assertThatRecordWasInserted(Order.from(orderId2, order2));
     }
 
     @Test public void
     fail_to_fetch_orders_from_external_web_service() {
-        final Order order1 = order1(NO_STORE_ID), order2 = order2(NO_STORE_ID);
+        final Order order1 = order1(NO_STORE_ID, UUID.randomUUID().toString()),
+                order2 = order2(NO_STORE_ID, UUID.randomUUID().toString());
         givenGetOrdersFrom(NO_STORE_ID).andRespond(withServerError());
 
         orderProcessor.processOrdersFrom(new StoreId(NO_STORE_ID));
 
-        // TODO
         assertThatFilesDoesNotExist(order1);
         assertThatFilesDoesNotExist(order2);
+        assertThatRecordWasNotInserted(order1);
+        assertThatRecordWasNotInserted(order2);
     }
 
     // TODO : fail to save orders to file-system
@@ -127,17 +132,27 @@ public class OrderProcessorTest {
         assertThat(Files.exists(path)).isFalse();
     }
 
-    private Order order1(String storeId) {
+    private void assertThatRecordWasInserted(Order order) {
+        val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
+        assertThat(orderRecord).isEqualTo(order);
+    }
+
+    private void assertThatRecordWasNotInserted(Order order) {
+        val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
+        assertThat(orderRecord).isEqualTo(Order.INVALID);
+    }
+
+    private Order order1(String storeId, String uuid) {
         return new Order(null,
                 new StoreId(storeId),
-                new OrderReference(UUID.randomUUID().toString()),
+                new OrderReference(uuid),
                 "Purchase includes a discount");
     }
 
-    private Order order2(String storeId) {
+    private Order order2(String storeId, String uuid) {
         return new Order(null,
                 new StoreId(storeId),
-                new OrderReference(UUID.randomUUID().toString()),
+                new OrderReference(uuid),
                 "The payment is pending");
     }
 

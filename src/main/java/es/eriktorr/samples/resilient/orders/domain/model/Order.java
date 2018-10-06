@@ -10,6 +10,10 @@ public class Order {
     private final OrderReference orderReference;
     private final String description;
 
+    public static final Order INVALID = new Order(
+            new OrderId("-"), new StoreId("-"), new OrderReference("-"), null
+    );
+
     public static Order from(OrderId orderId, Order other) {
         return new Order(
                 orderId,
