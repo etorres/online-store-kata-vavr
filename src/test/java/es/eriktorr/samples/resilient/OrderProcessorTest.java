@@ -114,8 +114,6 @@ public class OrderProcessorTest {
         assertThatRecordWasNotInserted(order2);
     }
 
-    // TODO : fail to save orders to file-system
-
     private ResponseActions givenGetOrdersFrom(String storeId) {
         val url = String.format("%s/%s/orders", ordersServiceUrl, storeId);
         return mockRestServiceServer.expect(requestTo(url))
@@ -157,9 +155,11 @@ public class OrderProcessorTest {
     }
 
     /*
+    * TODO
     * Deduplicate
     * Summary Log on termination
     * RetryProperties
+    * test: fail to save orders to file-system
     */
 
 }
