@@ -8,11 +8,15 @@ import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClien
 import io.vavr.Function1;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static io.vavr.API.*;
+import static io.vavr.Patterns.$Failure;
+import static io.vavr.Patterns.$Success;
 
 @Slf4j
 public class OrderProcessor {
@@ -30,8 +34,10 @@ public class OrderProcessor {
     }
 
     public void processOrdersFrom(StoreId storeId) {
-        fetchOrdersFrom(storeId)
-                .forEach(functions.processOrder);
+        val stats = fetchOrdersFrom(storeId).stream()
+                .map(functions.saveAndThenInsertAndThenLogAnOrder)
+                .collect(Stats::new, Stats::add, Stats::combine);
+        log.info(stats.toString());
     }
 
     private List<Try<Order>> fetchOrdersFrom(StoreId storeId) {
@@ -51,20 +57,46 @@ public class OrderProcessor {
         private Function1<Try<Order>, Try<Order>> insertOrderIntoDatabase =
                 order -> order.andThen(() -> ordersRepository.save(order.get()));
 
-        private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> {
-            if (order.isSuccess()) {
-                log.info(String.format("Order created: %s", order));
-            } else {
-                log.error("Failed to create order", order.getCause());
-            }
-            return order;
-        };
+        private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> Match(order).of(
+                Case($Success($()), () -> {
+                    log.info(String.format("Order created: %s", order.get()));
+                    return order;
+                }),
+                Case($Failure($()), () -> {
+                    log.error("Failed to create order", order.getCause());
+                    return order;
+                }));
 
-        private Function1<Try<Order>, Try<Order>> saveAndInsertAndLogOrder = saveOrderToFileSystem
+        private Function1<Try<Order>, Try<Order>> saveAndThenInsertAndThenLogAnOrder = saveOrderToFileSystem
                 .andThen(insertOrderIntoDatabase)
                 .andThen(writeMessageToLog);
 
-        private Consumer<Try<Order>> processOrder = order -> saveAndInsertAndLogOrder.apply(order);
+    }
+
+    private class Stats {
+
+        private int possible = 0;
+        private int done = 0;
+
+        private void add(Try<Order> order) {
+            Match(order).of(
+                    Case($Success($()), () -> {
+                        done++;
+                        possible++;
+                        return order;
+                    }),
+                    Case($Failure($()), () -> order));
+        }
+
+        private void combine(Stats other) {
+            possible += other.possible;
+            done += other.done;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%d orders processed of %d possible", done, possible);
+        }
 
     }
 

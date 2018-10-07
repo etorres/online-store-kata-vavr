@@ -84,8 +84,8 @@ public class OrderProcessorTest {
     public void
     process_orders_from_store() throws IOException {
         final String uuid1 = UUID.randomUUID().toString(), uuid2 = UUID.randomUUID().toString();
-        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2);
         final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2);
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2);
         val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
                 order1, order2
         )));
@@ -157,7 +157,6 @@ public class OrderProcessorTest {
     /*
     * TODO
     * Deduplicate
-    * Summary Log on termination
     * RetryProperties
     * test: fail to save orders to file-system
     */
