@@ -56,9 +56,9 @@ public class OrdersRepository {
         val tableName = "tmp" + RandomStringUtils.random(60);
         try {
             createTemporary(tableName);
-            insertInto(orders, tableName);
-            updateWithIds(tableName);
-            return findDuplicateIn(tableName);
+            insertInto(tableName, orders);
+            updateWithOrderId(tableName);
+            return findDuplicateOrdersIn(tableName);
         } finally {
             drop(tableName);
         }
@@ -69,7 +69,7 @@ public class OrdersRepository {
                 "reference VARCHAR(64) NOT NULL, current_id VARCHAR(64))", tableName));
     }
 
-    private void insertInto(List<Order> orders, String tableName) {
+    private void insertInto(String tableName, List<Order> orders) {
         List<Object[]> batch = orders.stream().map(
                 order -> new Object[] {
                         order.getStoreId().getValue(),
@@ -82,12 +82,12 @@ public class OrdersRepository {
         }
     }
 
-    private void updateWithIds(String tableName) {
+    private void updateWithOrderId(String tableName) {
         jdbcTemplate.execute(String.format("UPDATE %s SET current_id = id FROM orders WHERE %s.store = orders.store " +
                 "AND %s.reference = orders.reference", tableName, tableName, tableName));
     }
 
-    private List<Tuple2<StoreId, OrderReference>> findDuplicateIn(String tableName) {
+    private List<Tuple2<StoreId, OrderReference>> findDuplicateOrdersIn(String tableName) {
         return jdbcTemplate.query(
                 String.format("SELECT store, reference FROM %s WHERE current_id IS NOT NULL", tableName),
                 new Object[]{},

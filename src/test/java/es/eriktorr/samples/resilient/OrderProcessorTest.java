@@ -84,18 +84,19 @@ public class OrderProcessorTest {
     public void
     process_orders_from_store() throws IOException {
         final String uuid1 = UUID.randomUUID().toString(), uuid2 = UUID.randomUUID().toString();
-        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2);
-        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2);
+        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2), orderId3 = new OrderId("00000000-0000-0000-0000-000000000000");
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2), order3 = duplicateOrder(STORE_ID_1);
         val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
-                order1, order2
+                order1, order2, order3
         )));
         givenGetOrdersFrom(STORE_ID_1).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
-        given(orderIdGenerator.nextOrderId()).willReturn(orderId1, orderId2);
+        given(orderIdGenerator.nextOrderId()).willReturn(orderId1, orderId2, orderId3);
 
         orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
 
         assertThatAFileWasCreatedFor(Order.from(orderId1, order1));
         assertThatAFileWasCreatedFor(Order.from(orderId2, order2));
+        assertThatFilesDoesNotExist(Order.from(orderId3, order3));
         assertThatRecordWasInserted(Order.from(orderId1, order1));
         assertThatRecordWasInserted(Order.from(orderId2, order2));
     }
@@ -154,9 +155,15 @@ public class OrderProcessorTest {
                 "The payment is pending");
     }
 
+    private Order duplicateOrder(String storeId) {
+        return new Order(null,
+                new StoreId(storeId),
+                new OrderReference("00000000-0000-0000-0000-000000000000"),
+                null);
+    }
+
     /*
     * TODO
-    * Deduplicate
     * RetryProperties
     * Test: fail to save orders to file-system
     */

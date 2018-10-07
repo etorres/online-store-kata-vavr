@@ -1,17 +1,21 @@
 package es.eriktorr.samples.resilient.orders.domain.services;
 
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
+import es.eriktorr.samples.resilient.orders.domain.model.OrderReference;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import io.vavr.Function1;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static io.vavr.API.*;
@@ -34,15 +38,28 @@ public class OrderProcessor {
     }
 
     public void processOrdersFrom(StoreId storeId) {
-        val stats = fetchOrdersFrom(storeId).stream()
+        val orders = fetchOrdersFrom(storeId)
+                .map(this::removeDuplicate)
+                .transform(functions.toTrySequence);
+        val stats = orders.stream()
                 .map(functions.saveAndThenInsertAndThenLogAnOrder)
                 .collect(Stats::new, Stats::add, Stats::combine);
         log.info(stats.toString());
     }
 
-    private List<Try<Order>> fetchOrdersFrom(StoreId storeId) {
-        return Try.ofSupplier(() -> ordersServiceClient.ordersFrom(storeId))
-                .transform(functions.toTrySequence);
+    private Try<List<Order>> fetchOrdersFrom(StoreId storeId) {
+        return Try.ofSupplier(() -> ordersServiceClient.ordersFrom(storeId));
+    }
+
+    private List<Order> removeDuplicate(List<Order> orders) {
+        val duplicateOrders = ordersRepository.findDuplicate(orders);
+        return orders.stream()
+                .filter(isDuplicate(duplicateOrders).negate())
+                .collect(Collectors.toList());
+    }
+
+    private Predicate<Order> isDuplicate(List<Tuple2<StoreId, OrderReference>> duplicateOrders) {
+        return order -> duplicateOrders.contains(Tuple.of(order.getStoreId(), order.getOrderReference()));
     }
 
     private class Functions {
