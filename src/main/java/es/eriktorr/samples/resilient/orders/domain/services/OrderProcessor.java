@@ -15,6 +15,7 @@ import lombok.val;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,7 @@ public class OrderProcessor {
 
     public void processOrdersFrom(StoreId storeId) {
         val orders = fetchOrdersFrom(storeId)
-                .map(this::removeDuplicate)
+                .map(functions.removeDuplicate)
                 .transform(functions.toTrySequence);
         val stats = orders.stream()
                 .map(functions.saveAndThenInsertAndThenLogAnOrder)
@@ -51,18 +52,18 @@ public class OrderProcessor {
         return Try.ofSupplier(() -> ordersServiceClient.ordersFrom(storeId));
     }
 
-    private List<Order> removeDuplicate(List<Order> orders) {
-        val duplicateOrders = ordersRepository.findDuplicate(orders);
-        return orders.stream()
-                .filter(isDuplicate(duplicateOrders).negate())
-                .collect(Collectors.toList());
-    }
-
-    private Predicate<Order> isDuplicate(List<Tuple2<StoreId, OrderReference>> duplicateOrders) {
-        return order -> duplicateOrders.contains(Tuple.of(order.getStoreId(), order.getOrderReference()));
-    }
-
     private class Functions {
+
+        private Function<List<Order>, List<Order>> removeDuplicate = orders -> {
+            val duplicateOrders = ordersRepository.findDuplicate(orders);
+            return orders.stream()
+                    .filter(isDuplicate(duplicateOrders).negate())
+                    .collect(Collectors.toList());
+        };
+
+        private Predicate<Order> isDuplicate(List<Tuple2<StoreId, OrderReference>> duplicateOrders) {
+            return order -> duplicateOrders.contains(Tuple.of(order.getStoreId(), order.getOrderReference()));
+        }
 
         private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> orders.isSuccess()
                 ? orders.get().stream().map(Try::success).collect(Collectors.toList())
