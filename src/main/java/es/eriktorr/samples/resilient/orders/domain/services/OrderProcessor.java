@@ -73,7 +73,7 @@ public class OrderProcessor {
                 order -> order.andThen(ordersFileWriter::writeToFile);
 
         private Function1<Try<Order>, Try<Order>> insertOrderIntoDatabase =
-                order -> order.andThen(() -> ordersRepository.save(order.get()));
+                order -> order.andThen(ordersRepository::save);
 
         private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> Match(order).of(
                 Case($Success($()), () -> {

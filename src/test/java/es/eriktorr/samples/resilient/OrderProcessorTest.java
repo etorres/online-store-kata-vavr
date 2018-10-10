@@ -5,7 +5,7 @@ import es.eriktorr.samples.resilient.orders.domain.model.*;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.RestClientType;
+import es.eriktorr.samples.resilient.configuration.RestClientType;
 import lombok.val;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
@@ -32,7 +32,10 @@ import java.util.LinkedHashSet;
 
 import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -122,6 +125,11 @@ public class OrderProcessorTest {
         assertThatNoRecordWasInserted(order1, order2);
     }
 
+    @Test public void
+    fail_to_save_orders_to_file_system() {
+        fail("feature under development");
+    }
+
     private ResponseActions givenGetOrdersFrom(String storeId) {
         val url = String.format("%s/%s/orders", ordersServiceUrl, storeId);
         return mockRestServiceServer.expect(requestTo(url))
@@ -192,10 +200,5 @@ public class OrderProcessorTest {
                 new OrderReference(EXISTING_ORDER_ID),
                 null);
     }
-
-    /*
-     * TODO
-     * Test: fail to save orders to file-system
-     */
 
 }

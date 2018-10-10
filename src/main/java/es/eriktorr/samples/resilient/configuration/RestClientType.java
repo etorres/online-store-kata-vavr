@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.ws;
+package es.eriktorr.samples.resilient.configuration;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 

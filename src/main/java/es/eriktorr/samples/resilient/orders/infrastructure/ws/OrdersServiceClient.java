@@ -1,5 +1,6 @@
 package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
+import es.eriktorr.samples.resilient.configuration.RestClientType;
 import es.eriktorr.samples.resilient.core.resilience4j.CircuitBreakerClient;
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;

@@ -51,7 +51,7 @@ public class OrdersRepository {
 
     @Transactional
     public List<Tuple2<StoreId, OrderReference>> findDuplicate(List<Order> orders) {
-        val tableName = "tmp" + RandomStringUtils.random(60);
+        val tableName = "tmp" + RandomStringUtils.randomAlphanumeric(60);
         try {
             createTemporary(tableName);
             insertInto(tableName, orders);

@@ -6,7 +6,6 @@ import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.RestClientType;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
