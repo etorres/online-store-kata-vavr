@@ -65,9 +65,13 @@ public class OrderProcessor {
             return order -> duplicateOrders.contains(Tuple.of(order.getStoreId(), order.getOrderReference()));
         }
 
-        private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> orders.isSuccess()
-                ? orders.get().stream().map(Try::success).collect(Collectors.toList())
-                : Collections.singletonList(Try.failure(orders.getCause()));
+        private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> Match(orders).of(
+                Case($Success($()), () ->
+                        orders.get().stream().map(Try::success).collect(Collectors.toList())
+                ),
+                Case($Failure($()), () ->
+                        Collections.singletonList(Try.failure(orders.getCause()))
+                ));
 
         private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem =
                 order -> order.andThen(ordersFileWriter::writeToFile);
