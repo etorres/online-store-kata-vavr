@@ -7,6 +7,7 @@ import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersReposi
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.RestClientType;
 import lombok.val;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,12 +26,12 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-import java.util.UUID;
 
 import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.UUID.randomUUID;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -85,9 +86,9 @@ public class OrderProcessorTest {
     @Test
     public void
     process_orders_from_store() throws IOException {
-        final String uuid1 = UUID.randomUUID().toString(), uuid2 = UUID.randomUUID().toString();
+        final String uuid1 = randomUUID().toString(), uuid2 = randomUUID().toString();
         final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2), orderId3 = new OrderId(EXISTING_ORDER_ID);
-        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2), order3 = duplicateOrder(STORE_ID_1);
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2), order3 = duplicateOrder();
         val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
                 order1, order2, order3
         )));
@@ -96,25 +97,29 @@ public class OrderProcessorTest {
 
         orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
 
-        assertThatAFileWasCreatedFor(Order.from(orderId1, order1));
-        assertThatAFileWasCreatedFor(Order.from(orderId2, order2));
-        assertThatFilesDoesNotExist(Order.from(orderId3, order3));
-        assertThatRecordWasInserted(Order.from(orderId1, order1));
-        assertThatRecordWasInserted(Order.from(orderId2, order2));
+        assertThatAFileWasCreatedFor(
+                Order.from(orderId1, order1),
+                Order.from(orderId2, order2)
+        );
+        assertThatNoFileExistFor(
+                Order.from(orderId3, order3)
+        );
+        assertThatARecordWasInserted(
+                Order.from(orderId1, order1),
+                Order.from(orderId2, order2)
+        );
     }
 
     @Test public void
     fail_to_fetch_orders_from_external_web_service() {
-        final Order order1 = order1(NO_STORE_ID, UUID.randomUUID().toString()),
-                order2 = order2(NO_STORE_ID, UUID.randomUUID().toString());
+        final Order order1 = order1(NO_STORE_ID, randomUUID().toString()),
+                order2 = order2(NO_STORE_ID, randomUUID().toString());
         givenGetOrdersFrom(NO_STORE_ID).andRespond(withServerError());
 
         orderProcessor.processOrdersFrom(new StoreId(NO_STORE_ID));
 
-        assertThatFilesDoesNotExist(order1);
-        assertThatFilesDoesNotExist(order2);
-        assertThatRecordWasNotInserted(order1);
-        assertThatRecordWasNotInserted(order2);
+        assertThatNoFileExistFor(order1, order2);
+        assertThatNoRecordWasInserted(order1, order2);
     }
 
     private ResponseActions givenGetOrdersFrom(String storeId) {
@@ -123,24 +128,48 @@ public class OrderProcessorTest {
                 .andExpect(method(HttpMethod.GET));
     }
 
-    private void assertThatAFileWasCreatedFor(Order order) throws IOException {
-        val path = orderPathCreator.pathFrom(order);
-        assertThat(Files.readAllLines(path).get(0)).isEqualTo(order.toString());
+    private void assertThatAFileWasCreatedFor(Order... orders) {
+        val softAssertions = new SoftAssertions();
+        Arrays.stream(orders).forEachOrdered(order -> {
+            val path = orderPathCreator.pathFrom(order);
+            softAssertions.assertThat(readAllLinesFrom(path)).isEqualTo(order.toString());
+        });
+        softAssertions.assertAll();
     }
 
-    private void assertThatFilesDoesNotExist(Order order) {
-        val path = orderPathCreator.pathFrom(order);
-        assertThat(Files.exists(path)).isFalse();
+    private String readAllLinesFrom(Path path) {
+        try {
+            return Files.readAllLines(path).get(0);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
-    private void assertThatRecordWasInserted(Order order) {
-        val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
-        assertThat(orderRecord).isEqualTo(order);
+    private void assertThatNoFileExistFor(Order... orders) {
+        val softAssertions = new SoftAssertions();
+        Arrays.stream(orders).forEachOrdered(order -> {
+            val path = orderPathCreator.pathFrom(order);
+            softAssertions.assertThat(Files.exists(path)).isFalse();
+        });
+        softAssertions.assertAll();
     }
 
-    private void assertThatRecordWasNotInserted(Order order) {
-        val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
-        assertThat(orderRecord).isEqualTo(Order.INVALID);
+    private void assertThatARecordWasInserted(Order... orders) {
+        val softAssertions = new SoftAssertions();
+        Arrays.stream(orders).forEachOrdered(order -> {
+            val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
+            softAssertions.assertThat(orderRecord).isEqualTo(order);
+        });
+        softAssertions.assertAll();
+    }
+
+    private void assertThatNoRecordWasInserted(Order... orders) {
+        val softAssertions = new SoftAssertions();
+        Arrays.stream(orders).forEachOrdered(order -> {
+            val orderRecord = ordersRepository.findBy(order.getStoreId(), order.getOrderReference());
+            softAssertions.assertThat(orderRecord).isEqualTo(Order.INVALID);
+        });
+        softAssertions.assertAll();
     }
 
     private Order order1(String storeId, String uuid) {
@@ -157,9 +186,9 @@ public class OrderProcessorTest {
                 "The payment is pending");
     }
 
-    private Order duplicateOrder(String storeId) {
+    private Order duplicateOrder() {
         return new Order(null,
-                new StoreId(storeId),
+                new StoreId(STORE_ID_1),
                 new OrderReference(EXISTING_ORDER_ID),
                 null);
     }
