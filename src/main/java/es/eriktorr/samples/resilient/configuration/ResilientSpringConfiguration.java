@@ -1,17 +1,15 @@
 package es.eriktorr.samples.resilient.configuration;
 
+import es.eriktorr.samples.resilient.core.resilience4j.RetryProperties;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.WriterType;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
+import es.eriktorr.samples.resilient.orders.infrastructure.ws.RestClientType;
 import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
-import io.github.resilience4j.retry.IntervalFunction;
-import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -19,9 +17,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
-
-import static es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter.ORDERS_FILE_WRITER;
 import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 
 @Configuration
@@ -33,18 +28,18 @@ public class ResilientSpringConfiguration {
     @Value("${orders.storage.path}")
     private String ordersStoragePath;
 
-    @Value("${orders.storage.retry.maxAttempts}")
-    private int ordersMaxAttempts;
+    private final RetryProperties retryProperties;
 
-    @Value("${orders.storage.retry.intervalInMillis}")
-    private long ordersIntervalInMillis;
+    public ResilientSpringConfiguration(RetryProperties retryProperties) {
+        this.retryProperties = retryProperties;
+    }
 
     @Bean
     public OrderIdGenerator orderIdGenerator() {
         return new OrderIdGenerator();
     }
 
-    @Bean @ClientType(ORDERS_SERVICE_CLIENT)
+    @Bean @RestClientType(ORDERS_SERVICE_CLIENT)
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {
         return restTemplateBuilder
                 .rootUri(ordersServiceUrl)
@@ -52,7 +47,8 @@ public class ResilientSpringConfiguration {
     }
 
     @Bean
-    public OrdersServiceClient ordersServiceClient(RestTemplate restTemplate, OrderIdGenerator orderIdGenerator,
+    public OrdersServiceClient ordersServiceClient(@RestClientType(ORDERS_SERVICE_CLIENT) RestTemplate restTemplate,
+                                                   OrderIdGenerator orderIdGenerator,
                                                    CircuitBreakerRegistry circuitBreakerRegistry,
                                                    CircuitBreakerProperties circuitBreakerProperties) {
         return new OrdersServiceClient(restTemplate, orderIdGenerator, circuitBreakerRegistry, circuitBreakerProperties);
@@ -63,24 +59,14 @@ public class ResilientSpringConfiguration {
         return RetryRegistry.ofDefaults();
     }
 
-    @Bean @WriterType(ORDERS_FILE_WRITER)
-    public RetryConfig retryConfig() {
-        return RetryConfig.custom()
-                .maxAttempts(ordersMaxAttempts)
-                .intervalFunction(IntervalFunction.of(Duration.ofMillis(ordersIntervalInMillis)))
-                .build();
-    }
-
     @Bean
     public OrderPathCreator orderPathCreator() {
         return new OrderPathCreator(ordersStoragePath);
     }
 
     @Bean
-    public OrdersFileWriter ordersFileWriter(OrderPathCreator orderPathCreator,
-                                             RetryRegistry retryRegistry,
-                                             @WriterType(ORDERS_FILE_WRITER) RetryConfig retryConfig) {
-        return new OrdersFileWriter(orderPathCreator, retryRegistry, retryConfig);
+    public OrdersFileWriter ordersFileWriter(OrderPathCreator orderPathCreator, RetryRegistry retryRegistry) {
+        return new OrdersFileWriter(orderPathCreator, retryRegistry, retryProperties);
     }
 
     @Bean

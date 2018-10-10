@@ -1,5 +1,6 @@
 package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
+import es.eriktorr.samples.resilient.core.resilience4j.CircuitBreakerClient;
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
@@ -25,7 +26,7 @@ public class OrdersServiceClient extends CircuitBreakerClient {
 
     private final OrderIdGenerator orderIdGenerator;
 
-    public OrdersServiceClient(@ClientType(ORDERS_SERVICE_CLIENT) RestTemplate restTemplate,
+    public OrdersServiceClient(@RestClientType(ORDERS_SERVICE_CLIENT) RestTemplate restTemplate,
                                OrderIdGenerator orderIdGenerator, CircuitBreakerRegistry circuitBreakerRegistry,
                                CircuitBreakerProperties circuitBreakerProperties) {
         super(restTemplate, circuitBreakerRegistry, circuitBreakerProperties, ORDERS_SERVICE_CLIENT);

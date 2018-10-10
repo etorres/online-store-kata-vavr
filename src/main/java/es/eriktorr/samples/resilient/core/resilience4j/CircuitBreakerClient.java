@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.ws;
+package es.eriktorr.samples.resilient.core.resilience4j;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;

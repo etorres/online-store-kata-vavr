@@ -5,7 +5,7 @@ import es.eriktorr.samples.resilient.orders.domain.model.*;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.ClientType;
+import es.eriktorr.samples.resilient.orders.infrastructure.ws.RestClientType;
 import lombok.val;
 import org.junit.After;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class OrderProcessorTest {
     private static final String STORE_ID_1 = "store1";
     private static final String NO_STORE_ID = "no_store";
 
-    @Autowired @ClientType(ORDERS_SERVICE_CLIENT)
+    @Autowired @RestClientType(ORDERS_SERVICE_CLIENT)
     private RestTemplate restTemplate;
 
     @Autowired
@@ -164,7 +164,6 @@ public class OrderProcessorTest {
 
     /*
     * TODO
-    * RetryProperties
     * Test: fail to save orders to file-system
     */
 

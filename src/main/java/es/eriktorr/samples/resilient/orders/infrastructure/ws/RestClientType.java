@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.filesystem;
+package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 @Qualifier
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.TYPE, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface WriterType {
+public @interface RestClientType {
 
     String value();
 

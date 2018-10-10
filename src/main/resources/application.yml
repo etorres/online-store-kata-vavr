@@ -9,9 +9,6 @@ orders:
   service.url: http://orders.${spring.profiles.active}.example.com
   storage:
     path: /storage/ftp/orders
-    retry:
-      maxAttempts: 3
-      intervalInMillis: 1000
 resilience4j.circuitbreaker:
   backends:
     ordersServiceClient:
@@ -20,6 +17,11 @@ resilience4j.circuitbreaker:
       waitInterval: 5000
       failureRateThreshold: 50
       eventConsumerBufferSize: 10
+resilience4j.retry:
+  backends:
+  - name: ordersFileWriter
+    maxAttempts: 3
+    intervalInMillis: 1000
 ---
 spring:
   profiles: development
