@@ -1,6 +1,6 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.filesystem;
+package es.eriktorr.katas.online_store.orders.infrastructure.filesystem;
 
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
+import es.eriktorr.katas.online_store.orders.domain.model.Order;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

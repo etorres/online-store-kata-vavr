@@ -1,12 +1,12 @@
-package es.eriktorr.samples.resilient.configuration;
+package es.eriktorr.katas.online_store.configuration;
 
-import es.eriktorr.samples.resilient.core.resilience4j.RetryProperties;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
-import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
-import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
+import es.eriktorr.katas.online_store.resilience4j.RetryProperties;
+import es.eriktorr.katas.online_store.orders.domain.model.OrderIdGenerator;
+import es.eriktorr.katas.online_store.orders.domain.services.OrderProcessor;
+import es.eriktorr.katas.online_store.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.katas.online_store.orders.infrastructure.filesystem.OrderPathCreator;
+import es.eriktorr.katas.online_store.orders.infrastructure.filesystem.OrdersFileWriter;
+import es.eriktorr.katas.online_store.orders.infrastructure.ws.OrdersServiceClient;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
+import static es.eriktorr.katas.online_store.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 
 @Configuration
 public class ResilientSpringConfiguration {

@@ -1,9 +1,9 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.database;
+package es.eriktorr.katas.online_store.orders.infrastructure.database;
 
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderId;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderReference;
-import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
+import es.eriktorr.katas.online_store.orders.domain.model.Order;
+import es.eriktorr.katas.online_store.orders.domain.model.OrderId;
+import es.eriktorr.katas.online_store.orders.domain.model.OrderReference;
+import es.eriktorr.katas.online_store.orders.domain.model.StoreId;
 import io.vavr.Tuple2;
 import lombok.val;
 import org.apache.commons.lang3.RandomStringUtils;

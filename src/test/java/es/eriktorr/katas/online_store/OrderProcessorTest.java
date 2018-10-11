@@ -1,11 +1,11 @@
-package es.eriktorr.samples.resilient;
+package es.eriktorr.katas.online_store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import es.eriktorr.samples.resilient.configuration.RestClientType;
-import es.eriktorr.samples.resilient.orders.domain.model.*;
-import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
-import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
+import es.eriktorr.katas.online_store.configuration.RestClientType;
+import es.eriktorr.katas.online_store.orders.domain.model.*;
+import es.eriktorr.katas.online_store.orders.domain.services.OrderProcessor;
+import es.eriktorr.katas.online_store.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.katas.online_store.orders.infrastructure.filesystem.OrderPathCreator;
 import lombok.val;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
+import static es.eriktorr.katas.online_store.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -45,7 +45,7 @@ import static org.springframework.util.FileSystemUtils.deleteRecursively;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ResilientSpringApplication.class, properties = {
-        "orders.storage.path=${java.io.tmpdir}/resilient/${random.value}"
+        "orders.storage.path=${java.io.tmpdir}/katas/online_store/${random.value}"
 })
 public class OrderProcessorTest {
 

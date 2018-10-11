@@ -1,8 +1,8 @@
 spring:
-  application.name: resilient-application
+  application.name: online-store-application
   profiles.active: development
   datasource:
-    url: jdbc:postgresql://localhost/resilient
+    url: jdbc:postgresql://localhost/online_store
     username: postgres
     password: changeit
 orders:

@@ -1,11 +1,11 @@
-package es.eriktorr.samples.resilient.orders.domain.services;
+package es.eriktorr.katas.online_store.orders.domain.services;
 
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderReference;
-import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
-import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
-import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrdersFileWriter;
-import es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient;
+import es.eriktorr.katas.online_store.orders.domain.model.Order;
+import es.eriktorr.katas.online_store.orders.domain.model.OrderReference;
+import es.eriktorr.katas.online_store.orders.domain.model.StoreId;
+import es.eriktorr.katas.online_store.orders.infrastructure.database.OrdersRepository;
+import es.eriktorr.katas.online_store.orders.infrastructure.filesystem.OrdersFileWriter;
+import es.eriktorr.katas.online_store.orders.infrastructure.ws.OrdersServiceClient;
 import io.vavr.Function1;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;

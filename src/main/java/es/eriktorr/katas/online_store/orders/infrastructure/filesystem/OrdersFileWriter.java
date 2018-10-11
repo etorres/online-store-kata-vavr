@@ -1,8 +1,8 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.filesystem;
+package es.eriktorr.katas.online_store.orders.infrastructure.filesystem;
 
-import es.eriktorr.samples.resilient.core.resilience4j.RetryClient;
-import es.eriktorr.samples.resilient.core.resilience4j.RetryProperties;
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
+import es.eriktorr.katas.online_store.resilience4j.RetryClient;
+import es.eriktorr.katas.online_store.resilience4j.RetryProperties;
+import es.eriktorr.katas.online_store.orders.domain.model.Order;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.vavr.CheckedFunction0;
 import lombok.val;

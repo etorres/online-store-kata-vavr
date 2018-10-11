@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.orders.domain.model;
+package es.eriktorr.katas.online_store.orders.domain.model;
 
 import java.util.UUID;
 

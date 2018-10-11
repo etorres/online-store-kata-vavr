@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.configuration;
+package es.eriktorr.katas.online_store.configuration;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 

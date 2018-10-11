@@ -1,4 +1,4 @@
-package es.eriktorr.samples.resilient.core.resilience4j;
+package es.eriktorr.katas.online_store.resilience4j;
 
 import io.github.resilience4j.retry.IntervalFunction;
 import io.github.resilience4j.retry.Retry;

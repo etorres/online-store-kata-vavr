@@ -1,10 +1,10 @@
-package es.eriktorr.samples.resilient.orders.infrastructure.ws;
+package es.eriktorr.katas.online_store.orders.infrastructure.ws;
 
-import es.eriktorr.samples.resilient.configuration.RestClientType;
-import es.eriktorr.samples.resilient.core.resilience4j.CircuitBreakerRestClient;
-import es.eriktorr.samples.resilient.orders.domain.model.Order;
-import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
-import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
+import es.eriktorr.katas.online_store.configuration.RestClientType;
+import es.eriktorr.katas.online_store.resilience4j.CircuitBreakerRestClient;
+import es.eriktorr.katas.online_store.orders.domain.model.Order;
+import es.eriktorr.katas.online_store.orders.domain.model.OrderIdGenerator;
+import es.eriktorr.katas.online_store.orders.domain.model.StoreId;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
