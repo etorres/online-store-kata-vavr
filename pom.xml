@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>es.eriktorr.samples</groupId>
-    <artifactId>resilient</artifactId>
+    <groupId>es.eriktorr.katas</groupId>
+    <artifactId>online-store-kata-vavr</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>resilient</name>
-    <description>Demo project for fault-tolerant application</description>
+    <name>online-store-kata-vavr</name>
+    <description>Online store kata based on VAVR and Resilience4j</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
