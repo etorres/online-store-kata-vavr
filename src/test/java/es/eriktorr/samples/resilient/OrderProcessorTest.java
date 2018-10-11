@@ -1,11 +1,11 @@
 package es.eriktorr.samples.resilient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.eriktorr.samples.resilient.configuration.RestClientType;
 import es.eriktorr.samples.resilient.orders.domain.model.*;
 import es.eriktorr.samples.resilient.orders.domain.services.OrderProcessor;
 import es.eriktorr.samples.resilient.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.samples.resilient.orders.infrastructure.filesystem.OrderPathCreator;
-import es.eriktorr.samples.resilient.configuration.RestClientType;
 import lombok.val;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.After;
@@ -25,9 +25,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 
 import static es.eriktorr.samples.resilient.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
@@ -35,7 +37,6 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
@@ -126,8 +127,26 @@ public class OrderProcessorTest {
     }
 
     @Test public void
-    fail_to_save_orders_to_file_system() {
-        fail("feature under development");
+    fail_to_save_orders_to_file_system() throws IOException {
+        val uuid1 = randomUUID().toString();
+        val orderId1 = new OrderId(uuid1);
+        val order1 = order1(STORE_ID_1, uuid1);
+        val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Collections.singletonList(order1)));
+        givenGetOrdersFrom(STORE_ID_1).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
+        given(orderIdGenerator.nextOrderId()).willReturn(orderId1);
+
+        val pathToOrder1 = orderPathCreator.pathFrom(order1);
+        Files.createDirectories(pathToOrder1.getParent());
+        Files.createFile(pathToOrder1);
+
+        try (val file = new RandomAccessFile(pathToOrder1.toFile(), "rw"); val fileChannel = file.getChannel();
+             val fileLock = fileChannel.tryLock()) {
+            if (fileLock == null) fail("failed to acquire file lock");
+            orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
+        }
+
+        assertThat(pathToOrder1.toFile().length()).isEqualTo(0L);
+        assertThatNoRecordWasInserted(order1);
     }
 
     private ResponseActions givenGetOrdersFrom(String storeId) {
