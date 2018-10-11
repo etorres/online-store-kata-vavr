@@ -1,7 +1,7 @@
 package es.eriktorr.samples.resilient.orders.infrastructure.ws;
 
 import es.eriktorr.samples.resilient.configuration.RestClientType;
-import es.eriktorr.samples.resilient.core.resilience4j.CircuitBreakerClient;
+import es.eriktorr.samples.resilient.core.resilience4j.CircuitBreakerRestClient;
 import es.eriktorr.samples.resilient.orders.domain.model.Order;
 import es.eriktorr.samples.resilient.orders.domain.model.OrderIdGenerator;
 import es.eriktorr.samples.resilient.orders.domain.model.StoreId;
@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class OrdersServiceClient extends CircuitBreakerClient {
+public class OrdersServiceClient extends CircuitBreakerRestClient {
 
     public static final String ORDERS_SERVICE_CLIENT = "ordersServiceClient";
 

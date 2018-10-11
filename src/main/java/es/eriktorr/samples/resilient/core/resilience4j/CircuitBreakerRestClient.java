@@ -5,15 +5,15 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.circuitbreaker.autoconfigure.CircuitBreakerProperties;
 import org.springframework.web.client.RestTemplate;
 
-public abstract class CircuitBreakerClient {
+public abstract class CircuitBreakerRestClient {
 
     protected final RestTemplate restTemplate;
     protected final CircuitBreaker circuitBreaker;
 
-    protected CircuitBreakerClient(RestTemplate restTemplate,
-                                   CircuitBreakerRegistry circuitBreakerRegistry,
-                                   CircuitBreakerProperties circuitBreakerProperties,
-                                   String name) {
+    protected CircuitBreakerRestClient(RestTemplate restTemplate,
+                                       CircuitBreakerRegistry circuitBreakerRegistry,
+                                       CircuitBreakerProperties circuitBreakerProperties,
+                                       String name) {
         this.restTemplate = restTemplate;
         circuitBreaker = circuitBreakerRegistry.circuitBreaker(name, circuitBreakerProperties.createCircuitBreakerConfig(name));
     }
