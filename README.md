@@ -26,4 +26,4 @@ You can compose functions with `andThen` or `compose`: [vavr](http://www.vavr.io
 
 `Match` is a pattern matching with support for object decomposition and that can be used as a statement or expression: [vavr](http://www.vavr.io/vavr-docs/#_pattern_matching)
 
-In you have one minutes left, please check the links above.
+In you have one minute left, please check the links above.
