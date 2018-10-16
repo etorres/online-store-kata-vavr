@@ -31,8 +31,7 @@ public class OrderProcessor {
     private final OrdersRepository ordersRepository;
     private final Functions functions = new Functions();
 
-    public OrderProcessor(OrdersServiceClient ordersServiceClient, OrdersFileWriter ordersFileWriter,
-                          OrdersRepository ordersRepository) {
+    public OrderProcessor(OrdersServiceClient ordersServiceClient, OrdersFileWriter ordersFileWriter, OrdersRepository ordersRepository) {
         this.ordersServiceClient = ordersServiceClient;
         this.ordersFileWriter = ordersFileWriter;
         this.ordersRepository = ordersRepository;
@@ -66,11 +65,11 @@ public class OrderProcessor {
         }
 
         private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> Match(orders).of(
-                Case($Success($()), () ->
-                        orders.get().stream().map(Try::success).collect(Collectors.toList())
+                Case($Success($()), values ->
+                        values.stream().map(Try::success).collect(Collectors.toList())
                 ),
-                Case($Failure($()), () ->
-                        Collections.singletonList(Try.failure(orders.getCause()))
+                Case($Failure($()), error ->
+                        Collections.singletonList(Try.failure(error))
                 ));
 
         private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem =
@@ -80,12 +79,12 @@ public class OrderProcessor {
                 order -> order.andThen(ordersRepository::save);
 
         private Function1<Try<Order>, Try<Order>> writeMessageToLog = order -> Match(order).of(
-                Case($Success($()), () -> {
-                    log.info(String.format("Order created: %s", order.get()));
+                Case($Success($()), value -> {
+                    log.info(String.format("Order created: %s", value));
                     return order;
                 }),
-                Case($Failure($()), () -> {
-                    log.error("Failed to create order", order.getCause());
+                Case($Failure($()), error -> {
+                    log.error("Failed to create order", error);
                     return order;
                 }));
 
