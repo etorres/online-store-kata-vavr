@@ -27,3 +27,10 @@ You can compose functions with `andThen` or `compose`: [vavr](http://www.vavr.io
 `Match` is a pattern matching with support for object decomposition and that can be used as a statement or expression: [vavr](http://www.vavr.io/vavr-docs/#_pattern_matching)
 
 In you have one minute left, please read the links above.
+
+## Feedback after session in Mango
+
+1. Most people with Windows laptops have problems with Docker. Using an in-memory database like H2 may help to avoid these issues.
+2. Removing duplicate orders from the list is made via a database batch update operation. This is an optimization, not suitable for a kata.
+3. Summary log is showing 0 order processed of 0 possible when a file writing fails.
+4. Steps: Acceptance tests, List operations, Order operations, failure recovery.
