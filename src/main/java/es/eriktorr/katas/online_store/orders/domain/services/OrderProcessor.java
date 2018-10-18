@@ -100,10 +100,10 @@ public class OrderProcessor {
         private int done = 0;
 
         private void add(Try<Order> order) {
+            possible++;
             Match(order).of(
                     Case($Success($()), () -> {
                         done++;
-                        possible++;
                         return order;
                     }),
                     Case($Failure($()), () -> order));

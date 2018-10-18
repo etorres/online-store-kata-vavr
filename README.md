@@ -32,5 +32,4 @@ In you have one minute left, please read the links above.
 
 1. Most people with Windows laptops have problems with Docker. Using an in-memory database like H2 may help to avoid these issues.
 2. Removing duplicate orders from the list is made via a database batch update operation. This is an optimization, not suitable for a kata.
-3. Summary log is showing 0 order processed of 0 possible when a file writing fails.
-4. Steps: Acceptance tests, List operations, Order operations, failure recovery.
+3. Steps: Acceptance tests, List operations, Order operations, failure recovery.
