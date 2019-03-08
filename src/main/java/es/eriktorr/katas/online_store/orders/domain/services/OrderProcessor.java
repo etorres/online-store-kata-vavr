@@ -10,11 +10,14 @@ import io.vavr.Function1;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.control.Try;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -41,10 +44,15 @@ public class OrderProcessor {
         val orders = fetchOrdersFrom(storeId)
                 .map(functions.removeDuplicate)
                 .transform(functions.toTrySequence);
-        val stats = orders.stream()
-                .map(functions.saveAndThenInsertAndThenLogAnOrder)
-                .collect(Stats::new, Stats::add, Stats::combine);
-        log.info(stats.toString());
+        val summary = orders.parallelStream()
+                .map(functions.saveOrderToFileSystem
+                        .andThen(functions.insertOrderIntoDatabase)
+                        .andThen(functions.writeMessageToLog))
+                .collect(Collectors.groupingByConcurrent(order -> Match(order).of(
+                        Case($Success($()), () -> true),
+                        Case($Failure($()), () -> false))));
+        val stats = Stats.from(summary);
+        log.info(String.format("%d orders processed of %d possible", stats.done, stats.possible));
     }
 
     private Try<List<Order>> fetchOrdersFrom(StoreId storeId) {
@@ -87,36 +95,23 @@ public class OrderProcessor {
                     log.error("Failed to create order", error);
                     return order;
                 }));
-
-        private Function1<Try<Order>, Try<Order>> saveAndThenInsertAndThenLogAnOrder = saveOrderToFileSystem
-                .andThen(insertOrderIntoDatabase)
-                .andThen(writeMessageToLog);
-
     }
 
-    private class Stats {
+    @Value
+    private static class Stats {
 
-        private int possible = 0;
-        private int done = 0;
+        private final int done;
+        private final int possible;
 
-        private void add(Try<Order> order) {
-            possible++;
-            Match(order).of(
-                    Case($Success($()), () -> {
-                        done++;
-                        return order;
-                    }),
-                    Case($Failure($()), () -> order));
-        }
-
-        private void combine(Stats other) {
-            possible += other.possible;
-            done += other.done;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("%d orders processed of %d possible", done, possible);
+        private static Stats from(ConcurrentMap<Boolean, List<Try<Order>>> map) {
+            val done = Optional.ofNullable(map.get(true))
+                    .orElse(Collections.emptyList())
+                    .size();
+            val possible = map.values()
+                    .stream()
+                    .mapToInt(List::size)
+                    .sum();
+            return new Stats(done, possible);
         }
 
     }

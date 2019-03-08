@@ -29,7 +29,6 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 
 import static es.eriktorr.katas.online_store.orders.infrastructure.ws.OrdersServiceClient.ORDERS_SERVICE_CLIENT;
@@ -89,10 +88,10 @@ public class OrderProcessorTest {
 
     @Test
     public void
-    process_orders_from_store() throws IOException {
+    process_new_orders_from_store() throws IOException {
         final String uuid1 = randomUUID().toString(), uuid2 = randomUUID().toString();
-        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2), orderId3 = new OrderId(EXISTING_ORDER_ID);
-        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2), order3 = duplicateOrder();
+        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2), orderId3 = existingOrderId();
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2), order3 = existingOrder();
         val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
                 order1, order2, order3
         )));
@@ -128,12 +127,14 @@ public class OrderProcessorTest {
 
     @Test public void
     fail_to_save_orders_to_file_system() throws IOException {
-        val uuid1 = randomUUID().toString();
-        val orderId1 = new OrderId(uuid1);
-        val order1 = order1(STORE_ID_1, uuid1);
-        val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Collections.singletonList(order1)));
+        final String uuid1 = randomUUID().toString(), uuid2 = randomUUID().toString();
+        final OrderId orderId1 = new OrderId(uuid1), orderId2 = new OrderId(uuid2);
+        final Order order1 = order1(STORE_ID_1, uuid1), order2 = order2(STORE_ID_1, uuid2);
+        val ordersJsonPayload = objectMapper.writeValueAsString(new LinkedHashSet<>(Arrays.asList(
+                order1, order2
+        )));
         givenGetOrdersFrom(STORE_ID_1).andRespond(withSuccess(ordersJsonPayload, MediaType.APPLICATION_JSON));
-        given(orderIdGenerator.nextOrderId()).willReturn(orderId1);
+        given(orderIdGenerator.nextOrderId()).willReturn(orderId1, orderId2);
 
         val pathToOrder1 = orderPathCreator.pathFrom(order1);
         Files.createDirectories(pathToOrder1.getParent());
@@ -145,8 +146,13 @@ public class OrderProcessorTest {
             orderProcessor.processOrdersFrom(new StoreId(STORE_ID_1));
         }
 
+        assertThatAFileWasCreatedFor(
+                Order.from(orderId2, order2)
+        );
         assertThat(pathToOrder1.toFile().length()).isEqualTo(0L);
-        assertThatNoRecordWasInserted(order1);
+        assertThatARecordWasInserted(
+                Order.from(orderId2, order2)
+        );
     }
 
     private ResponseActions givenGetOrdersFrom(String storeId) {
@@ -213,7 +219,11 @@ public class OrderProcessorTest {
                 "The payment is pending");
     }
 
-    private Order duplicateOrder() {
+    private OrderId existingOrderId() {
+        return new OrderId(EXISTING_ORDER_ID);
+    }
+
+    private Order existingOrder() {
         return new Order(null,
                 new StoreId(STORE_ID_1),
                 new OrderReference(EXISTING_ORDER_ID),
