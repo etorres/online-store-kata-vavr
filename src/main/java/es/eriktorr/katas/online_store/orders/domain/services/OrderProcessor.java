@@ -2,6 +2,7 @@ package es.eriktorr.katas.online_store.orders.domain.services;
 
 import es.eriktorr.katas.online_store.orders.domain.model.Order;
 import es.eriktorr.katas.online_store.orders.domain.model.OrderReference;
+import es.eriktorr.katas.online_store.orders.domain.model.OrdersNotRetrievedException;
 import es.eriktorr.katas.online_store.orders.domain.model.StoreId;
 import es.eriktorr.katas.online_store.orders.infrastructure.database.OrdersRepository;
 import es.eriktorr.katas.online_store.orders.infrastructure.filesystem.OrdersFileWriter;
@@ -43,14 +44,13 @@ public class OrderProcessor {
     public void processOrdersFrom(StoreId storeId) {
         val orders = fetchOrdersFrom(storeId)
                 .map(functions.removeDuplicate)
-                .transform(functions.toTrySequence);
+                .transform(functions.toOrdersSequence);
         val summary = orders.parallelStream()
                 .map(functions.saveOrderToFileSystem
                         .andThen(functions.insertOrderIntoDatabase)
                         .andThen(functions.writeMessageToLog))
-                .collect(Collectors.groupingByConcurrent(order -> Match(order).of(
-                        Case($Success($()), () -> true),
-                        Case($Failure($()), () -> false))));
+                .filter(functions.excludeOrdersNotRetrievedErrors)
+                .collect(Collectors.groupingByConcurrent(functions.executionSummary));
         val stats = Stats.from(summary);
         log.info(String.format("%d orders processed of %d possible", stats.done, stats.possible));
     }
@@ -72,12 +72,12 @@ public class OrderProcessor {
             return order -> duplicateOrders.contains(Tuple.of(order.getStoreId(), order.getOrderReference()));
         }
 
-        private Function1<Try<List<Order>>, List<Try<Order>>> toTrySequence = orders -> Match(orders).of(
+        private Function1<Try<List<Order>>, List<Try<Order>>> toOrdersSequence = orders -> Match(orders).of(
                 Case($Success($()), values ->
                         values.stream().map(Try::success).collect(Collectors.toList())
                 ),
                 Case($Failure($()), error ->
-                        Collections.singletonList(Try.failure(error))
+                        Collections.singletonList(Try.failure(new OrdersNotRetrievedException(error)))
                 ));
 
         private Function1<Try<Order>, Try<Order>> saveOrderToFileSystem =
@@ -95,6 +95,14 @@ public class OrderProcessor {
                     log.error("Failed to create order", error);
                     return order;
                 }));
+
+        private Predicate<Try<Order>> excludeOrdersNotRetrievedErrors = order -> Match(order).of(
+                Case($Success($()), () -> true),
+                Case($Failure($()), error -> !(error instanceof OrdersNotRetrievedException)));
+
+        private Function<Try<Order>, Boolean> executionSummary = order -> Match(order).of(
+                Case($Success($()), () -> true),
+                Case($Failure($()), () -> false));
     }
 
     @Value
