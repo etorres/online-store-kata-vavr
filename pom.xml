@@ -24,7 +24,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <spring-cloud.version>Greenwich.SR3</spring-cloud.version>
-        <resilience4j.version>0.13.1</resilience4j.version>
+        <resilience4j.version>1.1.0</resilience4j.version>
     </properties>
 
     <dependencyManagement>
